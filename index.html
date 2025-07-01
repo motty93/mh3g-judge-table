@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>砂原採取 判定マクロ</title>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5" defer></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    td,
+    th {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .result {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+
+  </style>
+</head>
+
+<body x-data="judgeApp">
+  <h1>砂原採取マクロ 判定法</h1>
+
+  <form @submit.prevent="runJudgement">
+    <h2>各回の報酬パターン入力</h2>
+    <table>
+      <tr>
+        <th>スキル</th><template x-for="i in 7">
+          <th><span x-text="i + '枠'"></span></th>
+        </template>
+      </tr>
+      <template x-for="(trial, t) in patterns" :key="t">
+        <tr>
+          <td>
+            <select x-model="trial.skill">
+              <option>なし</option>
+              <option>幸運</option>
+              <option>激運</option>
+            </select>
+          </td>
+          <template x-for="i in 7" :key="i">
+            <td><input type="text" x-model="trial.slots[i-1]" /></td>
+          </template>
+        </tr>
+      </template>
+    </table>
+
+    <button type="submit">判定実行</button>
+  </form>
+
+  <div class="result" x-show="result">
+    <h2>判定結果</h2>
+    <p x-text="result"></p>
+  </div>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('judgeApp', () => ({
+        // 報酬テーブル（釣りミミズ50%、生肉25%、砥石25%）
+        rewards: [{
+            name: '釣りミミズ',
+            start: 0,
+            end: 49
+          },
+          {
+            name: '生肉',
+            start: 50,
+            end: 74
+          },
+          {
+            name: '砥石',
+            start: 75,
+            end: 99
+          }
+        ],
+        patterns: Array.from({
+          length: 3
+        }, () => ({
+          skill: 'なし',
+          slots: Array(7).fill('')
+        })),
+        result: '',
+        runJudgement() {
+          const skillToLack = {
+            'なし': 22,
+            '幸運': 26,
+            '激運': 29
+          };
+          const FIXED_CONSUME = 32;
+          const TABLE_COUNT = 17;
+          const pseudoSeeds = Array.from({
+            length: 6000
+          }, (_, i) => i * 37 % 100);
+          const candidateTables = [];
+          for (let t = 1; t <= TABLE_COUNT; t++) {
+            const offset = (t * 123) % pseudoSeeds.length;
+            let ptr = offset;
+            let match = true;
+            for (let trial of this.patterns) {
+              const lack = skillToLack[trial.skill];
+              for (let rewardName of trial.slots) {
+                // スカ判定
+                let skaval = pseudoSeeds[ptr % pseudoSeeds.length] % 32;
+                ptr++;
+                if (skaval >= lack) {
+                  if (rewardName === '') continue; // 空欄はスカ枠とみなす
+                  match = false;
+                  break;
+                }
+                // 報酬判定
+                let val = pseudoSeeds[ptr % pseudoSeeds.length];
+                ptr++;
+                const r = this.rewards.find(r => r.name === rewardName);
+                if (!r || val < r.start || val > r.end) {
+                  match = false;
+                  break;
+                }
+              }
+              ptr += FIXED_CONSUME;
+              if (!match) break;
+            }
+            if (match) candidateTables.push(`T${t}`);
+          }
+          this.result = candidateTables.length > 0 ?
+            `候補テーブル: ${candidateTables.join(', ')}` :
+            '該当テーブルなし';
+        }
+      }))
+    })
+
+  </script>
+
+</body>
+
+</html>
