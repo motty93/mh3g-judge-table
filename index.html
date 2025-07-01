@@ -13,6 +13,19 @@
       font-size: 87.5%;
     }
 
+    .form-button-container {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+    }
+
+    .submit-button {
+      width: auto !important; // pico css対策
+    }
+
+    .reset-button {
+      width: auto !important;
+    }
   </style>
 </head>
 
@@ -22,13 +35,18 @@
 
     <form @submit.prevent="runJudgement">
       <h2>各回の報酬パターン入力</h2>
+      <div style="margin-bottom: 1rem;">
+        <button type="button" @click="addPattern" :disabled="patterns.length >= 10">回数を追加</button>
+        <button type="button" @click="removePattern" :disabled="patterns.length <= 1">回数を削除</button>
+        <span style="margin-left: 1rem;">現在の回数: <span x-text="patterns.length"></span>回</span>
+      </div>
       <table>
         <thead>
           <tr>
             <th>回数</th>
             <th>スキル</th>
             <th>1枠目 (固定)</th>
-            <template x-for="i in 6">
+            <template x-for="i in 7">
               <th><span x-text="i + 1 + '枠'"></span></th>
             </template>
           </tr>
@@ -38,7 +56,7 @@
             <tr>
               <td x-text="t + 1 + '回目'"></td>
               <td>
-                <select x-model="trial.skill">
+                <select x-model="trial.skill" @change="saveToStorage()">
                   <option>なし</option>
                   <option>幸運</option>
                   <option>激運</option>
@@ -52,9 +70,9 @@
                   <option>砥石</option>
                 </select>
               </td>
-              <template x-for="i in 6" :key="i">
+              <template x-for="i in 7" :key="i">
                 <td>
-                  <select x-model="trial.slots[i]">
+                  <select x-model="trial.slots[i]" @change="saveToStorage()">
                     <option value=""></option>
                     <option>釣りミミズ</option>
                     <option>生肉</option>
@@ -67,12 +85,21 @@
         </tbody>
       </table>
 
-      <button type="submit">判定実行</button>
+      <div class="form-button-container">
+        <button type="submit" class="submit-button">判定実行</button>
+        <button type="button" @click="resetForm" class="reset-button secondary">リセット</button>
+      </div>
     </form>
 
     <div class="result" x-show="result">
       <h2>判定結果</h2>
-      <p><mark><span x-text="result"></span></mark></p>
+      <div x-show="foundTable">
+        <p><strong>予想されるテーブル:</strong> <mark x-text="foundTable"></mark></p>
+        <p><strong>1回目の判定開始シード値:</strong> <span x-text="seedValue"></span></p>
+      </div>
+      <div x-show="!foundTable && result">
+        <p><mark x-text="result"></mark></p>
+      </div>
     </div>
   </main>
   <script>
@@ -95,102 +122,195 @@
           }
         ],
         patterns: Array.from({
-          length: 3
+          length: 2
         }, () => ({
           skill: 'なし',
-          slots: Array(7).fill('')
+          slots: Array(8).fill('')
         })),
         result: '',
+        foundTable: '',
+        seedValue: '',
         seedData: [],
         loading: true,
         init() {
           this.loadSeedData();
+          this.loadFromStorage();
+        },
+        loadFromStorage() {
+          try {
+            const saved = localStorage.getItem('mh3g-judge-patterns');
+            if (saved) {
+              const data = JSON.parse(saved);
+              this.patterns = data.patterns || this.patterns;
+            }
+          } catch (error) {
+            // localStorageの読み込みエラーは無視
+          }
+        },
+        saveToStorage() {
+          try {
+            const data = {
+              patterns: this.patterns
+            };
+            localStorage.setItem('mh3g-judge-patterns', JSON.stringify(data));
+          } catch (error) {
+            // localStorageの保存エラーは無視
+          }
         },
         async loadSeedData() {
           try {
-            const response = await fetch('./table-seed.csv');
+            const response = await fetch('./data/table-seed.csv', {
+              headers: {
+                'Content-Type': 'text/plain'
+              }
+            });
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             const csvText = await response.text();
-            // CSVのヘッダーをスキップし、各行を数値の配列に変換
-            this.seedData = csvText.trim().split('\n').slice(1).map(row => row.split(',').map(Number));
+            const lines = csvText.trim().split(/\r?\n/);
+            this.seedData = lines.slice(1).map((row, index) => {
+              const values = row.split(',').map(val => {
+                const trimmed = val.trim();
+                if (trimmed === '') {
+                  return null;
+                }
+                const num = parseInt(trimmed, 10);
+                if (isNaN(num)) {
+                  return null;
+                }
+                return num;
+              });
+              return values;
+            });
           } catch (error) {
-            console.error('シードデータの読み込みに失敗しました:', error);
             this.result = 'エラー: シードデータを読み込めませんでした。';
           } finally {
             this.loading = false;
           }
         },
+        getRewardNameByValue(x) {
+          if (x >= 0 && x <= 49) return '釣りミミズ';
+          if (x >= 50 && x <= 74) return '生肉';
+          if (x >= 75 && x <= 99) return '砥石';
+          return `不明(${x})`;
+        },
+        addPattern() {
+          if (this.patterns.length < 10) {
+            this.patterns.push({
+              skill: 'なし',
+              slots: Array(8).fill('')
+            });
+            this.saveToStorage();
+          }
+        },
+        removePattern() {
+          if (this.patterns.length > 1) {
+            this.patterns.pop();
+            this.saveToStorage();
+          }
+        },
+        resetForm() {
+          if (confirm('入力内容をリセットしますか？')) {
+            this.patterns = Array.from({
+              length: 2
+            }, () => ({
+              skill: 'なし',
+              slots: Array(8).fill('')
+            }));
+            this.result = '';
+            this.foundTable = '';
+            this.seedValue = '';
+            this.saveToStorage();
+          }
+        },
         runJudgement() {
           if (this.loading) return;
-
           const skillToLack = {
             'なし': 22,
             '幸運': 26,
             '激運': 29
           };
-          const FIXED_CONSUME = 32;
+          const FIXED_CONSUME = 32; // 固定消費値
           const TABLE_COUNT = 17;
           const candidateTables = [];
-
-          // table-seed.csvの各列がT1, T2, ...に対応する
+          const isAllEmpty = this.patterns.every(p => p.slots.slice(1).every(s => s === ''));
+          if (isAllEmpty) {
+            this.result = '報酬を入力してください。';
+            return;
+          }
           for (let t = 0; t < TABLE_COUNT; t++) {
-            let ptr = 0; // CSVデータの行インデックス
-            let match = true;
-
-            for (const trial of this.patterns) {
-              const lack = skillToLack[trial.skill];
-
-              // 2枠目から7枠目までをチェック (1枠目は固定なのでスキップ)
-              for (const rewardName of trial.slots.slice(1)) {
-                // スカ判定
-                const skaval = this.seedData[ptr] ? this.seedData[ptr][t] % 32 : -1;
-                ptr++;
-                if (skaval === -1) { // データ範囲外
-                  match = false;
-                  break;
-                }
-
-                if (skaval >= lack) { // スカ
-                  if (rewardName !== '') {
-                    match = false;
+            const maxl = this.seedData.filter(row => row[t] !== null && row[t] !== undefined).length;
+            let furagu = 0;
+            let sido = '';
+            for (let gyou = 1; gyou <= maxl; gyou++) {
+              let ok = 1;
+              let kai = 0;
+              for (let k = 0; k < this.patterns.length; k++) {
+                const trial = this.patterns[k];
+                const lack = skillToLack[trial.skill];
+                let mawari = 0;
+                for (let n = 0; n < 7; n++) {
+                  const rewardName = trial.slots[n + 1];
+                  mawari += 1;
+                  // 4枠目以降でスカ判定（VBAの120行目に対応：n > 2）
+                  const skaRowVBA = ((gyou + kai + n * 2 - 1) % maxl + maxl) % maxl + 1;
+                  const skaIndex = skaRowVBA - 1;
+                  if (n > 2 && this.seedData[skaIndex][t] % 32 >= lack) {
+                    if (rewardName === '') {
+                      ok = 1;
+                    } else {
+                      ok = 0;
+                    }
                     break;
                   }
-                  continue; // スカ成功、次の枠へ
+                  mawari += 1;
+                  const wari = (gyou + kai + n * 2) % maxl;
+                  const x = this.seedData[wari][t] % 100;
+                  if (rewardName === '') {
+                    ok = 0;
+                    break;
+                  } else {
+                    const reward = this.rewards.find(r => r.name === rewardName);
+                    if (!reward) {
+                      ok = 0;
+                      break;
+                    }
+                    if (reward.start <= x && x <= reward.end) {
+                      ok = 1;
+                    } else {
+                      ok = 0;
+                      break;
+                    }
+                  }
                 }
-
-                // 報酬判定
-                const val = this.seedData[ptr] ? this.seedData[ptr][t] : -1;
-                ptr++;
-                if (val === -1) { // データ範囲外
-                  match = false;
-                  break;
-                }
-
-                const reward = this.rewards.find(r => r.name === rewardName);
-                if (!reward) { // 入力が空欄の場合（スカではない）
-                  match = false;
-                  break;
-                }
-                if (val < reward.start || val > reward.end) {
-                  match = false;
-                  break;
-                }
+                if (ok === 0) break;
+                kai = kai + mawari + FIXED_CONSUME;
               }
-
-              if (!match) break;
-              ptr += FIXED_CONSUME; // クエスト間の固定消費
-            }
-
-            if (match) {
-              candidateTables.push(`T${t + 1}`);
+              if (ok !== 0) {
+                furagu = furagu + 1;
+                const jsRowIndex = gyou - 1;
+                sido = sido + this.seedData[jsRowIndex][t] + ' ';
+                if (candidateTables.length === 0) {
+                  this.foundTable = `T${t + 1}`;
+                  this.seedValue = this.seedData[jsRowIndex][t];
+                }
+                candidateTables.push(`T${t + 1} (開始行: ${gyou}, シード値: ${this.seedData[jsRowIndex][t]})`);
+                break;
+              }
             }
           }
-
-          this.result = candidateTables.length > 0 ?
-            `候補テーブル: ${candidateTables.join(', ')}` :
-            '該当テーブルなし';
+          if (candidateTables.length > 0) {
+            this.result = `候補テーブル: ${candidateTables.join(', ')}`;
+          } else {
+            this.result = '該当テーブルなし';
+            this.foundTable = '';
+            this.seedValue = '';
+          }
         }
       }))
     })
+
   </script>
 </body>
 
