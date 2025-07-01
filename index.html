@@ -1,83 +1,83 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>砂原採取 判定マクロ</title>
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5" defer></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.2/dist/htmx.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-bottom: 1rem;
-    }
-
-    td,
-    th {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
-      text-align: center;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .result {
-      margin-top: 1rem;
-      font-weight: bold;
+    html {
+      font-size: 87.5%;
     }
 
   </style>
 </head>
 
 <body x-data="judgeApp">
-  <h1>砂原採取マクロ 判定法</h1>
+  <main class="container">
+    <h1>砂原採取マクロ 判定法</h1>
 
-  <form @submit.prevent="runJudgement">
-    <h2>各回の報酬パターン入力</h2>
-    <table>
-      <tr>
-        <th>スキル</th><template x-for="i in 7">
-          <th><span x-text="i + '枠'"></span></th>
-        </template>
-      </tr>
-      <template x-for="(trial, t) in patterns" :key="t">
-        <tr>
-          <td>
-            <select x-model="trial.skill">
-              <option>なし</option>
-              <option>幸運</option>
-              <option>激運</option>
-            </select>
-          </td>
-          <template x-for="i in 7" :key="i">
-            <td><input type="text" x-model="trial.slots[i-1]" /></td>
+    <form @submit.prevent="runJudgement">
+      <h2>各回の報酬パターン入力</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>回数</th>
+            <th>スキル</th>
+            <th>1枠目 (固定)</th>
+            <template x-for="i in 6">
+              <th><span x-text="i + 1 + '枠'"></span></th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="(trial, t) in patterns" :key="t">
+            <tr>
+              <td x-text="t + 1 + '回目'"></td>
+              <td>
+                <select x-model="trial.skill">
+                  <option>なし</option>
+                  <option>幸運</option>
+                  <option>激運</option>
+                </select>
+              </td>
+              <td>
+                <select x-model="trial.slots[0]" disabled>
+                  <option value=""></option>
+                  <option>釣りミミズ</option>
+                  <option>生肉</option>
+                  <option>砥石</option>
+                </select>
+              </td>
+              <template x-for="i in 6" :key="i">
+                <td>
+                  <select x-model="trial.slots[i]">
+                    <option value=""></option>
+                    <option>釣りミミズ</option>
+                    <option>生肉</option>
+                    <option>砥石</option>
+                  </select>
+                </td>
+              </template>
+            </tr>
           </template>
-        </tr>
-      </template>
-    </table>
+        </tbody>
+      </table>
 
-    <button type="submit">判定実行</button>
-  </form>
+      <button type="submit">判定実行</button>
+    </form>
 
-  <div class="result" x-show="result">
-    <h2>判定結果</h2>
-    <p x-text="result"></p>
-  </div>
-
+    <div class="result" x-show="result">
+      <h2>判定結果</h2>
+      <p><mark><span x-text="result"></span></mark></p>
+    </div>
+  </main>
   <script>
     document.addEventListener('alpine:init', () => {
       Alpine.data('judgeApp', () => ({
-        // 報酬テーブル（釣りミミズ50%、生肉25%、砥石25%）
         rewards: [{
             name: '釣りミミズ',
             start: 0,
@@ -101,7 +101,27 @@
           slots: Array(7).fill('')
         })),
         result: '',
+        seedData: [],
+        loading: true,
+        init() {
+          this.loadSeedData();
+        },
+        async loadSeedData() {
+          try {
+            const response = await fetch('./table-seed.csv');
+            const csvText = await response.text();
+            // CSVのヘッダーをスキップし、各行を数値の配列に変換
+            this.seedData = csvText.trim().split('\n').slice(1).map(row => row.split(',').map(Number));
+          } catch (error) {
+            console.error('シードデータの読み込みに失敗しました:', error);
+            this.result = 'エラー: シードデータを読み込めませんでした。';
+          } finally {
+            this.loading = false;
+          }
+        },
         runJudgement() {
+          if (this.loading) return;
+
           const skillToLack = {
             'なし': 22,
             '幸運': 26,
@@ -109,48 +129,69 @@
           };
           const FIXED_CONSUME = 32;
           const TABLE_COUNT = 17;
-          const pseudoSeeds = Array.from({
-            length: 6000
-          }, (_, i) => i * 37 % 100);
           const candidateTables = [];
-          for (let t = 1; t <= TABLE_COUNT; t++) {
-            const offset = (t * 123) % pseudoSeeds.length;
-            let ptr = offset;
+
+          // table-seed.csvの各列がT1, T2, ...に対応する
+          for (let t = 0; t < TABLE_COUNT; t++) {
+            let ptr = 0; // CSVデータの行インデックス
             let match = true;
-            for (let trial of this.patterns) {
+
+            for (const trial of this.patterns) {
               const lack = skillToLack[trial.skill];
-              for (let rewardName of trial.slots) {
+
+              // 2枠目から7枠目までをチェック (1枠目は固定なのでスキップ)
+              for (const rewardName of trial.slots.slice(1)) {
                 // スカ判定
-                let skaval = pseudoSeeds[ptr % pseudoSeeds.length] % 32;
+                const skaval = this.seedData[ptr] ? this.seedData[ptr][t] % 32 : -1;
                 ptr++;
-                if (skaval >= lack) {
-                  if (rewardName === '') continue; // 空欄はスカ枠とみなす
+                if (skaval === -1) { // データ範囲外
                   match = false;
                   break;
                 }
+
+                if (skaval >= lack) { // スカ
+                  if (rewardName !== '') {
+                    match = false;
+                    break;
+                  }
+                  continue; // スカ成功、次の枠へ
+                }
+
                 // 報酬判定
-                let val = pseudoSeeds[ptr % pseudoSeeds.length];
+                const val = this.seedData[ptr] ? this.seedData[ptr][t] : -1;
                 ptr++;
-                const r = this.rewards.find(r => r.name === rewardName);
-                if (!r || val < r.start || val > r.end) {
+                if (val === -1) { // データ範囲外
+                  match = false;
+                  break;
+                }
+
+                const reward = this.rewards.find(r => r.name === rewardName);
+                if (!reward) { // 入力が空欄の場合（スカではない）
+                  match = false;
+                  break;
+                }
+                if (val < reward.start || val > reward.end) {
                   match = false;
                   break;
                 }
               }
-              ptr += FIXED_CONSUME;
+
               if (!match) break;
+              ptr += FIXED_CONSUME; // クエスト間の固定消費
             }
-            if (match) candidateTables.push(`T${t}`);
+
+            if (match) {
+              candidateTables.push(`T${t + 1}`);
+            }
           }
+
           this.result = candidateTables.length > 0 ?
             `候補テーブル: ${candidateTables.join(', ')}` :
             '該当テーブルなし';
         }
       }))
     })
-
   </script>
-
 </body>
 
 </html>
