@@ -171,6 +171,67 @@
       width: auto !important;
     }
 
+    /* ボタンのカスタムスタイル */
+    button {
+      font-size: 0.9rem;
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    /* プライマリボタン（判定実行） */
+    button[type="submit"] {
+      background-color: #2d5a27;
+      border-color: #2d5a27;
+      color: white;
+    }
+
+    button[type="submit"]:hover:not(:disabled) {
+      background-color: #1e3d1a;
+      border-color: #1e3d1a;
+    }
+
+    button[type="submit"]:disabled {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      opacity: 0.6;
+    }
+
+    /* セカンダリボタン（リセット、削除） */
+    button.secondary,
+    button[type="button"] {
+      background-color: #f8f9fa;
+      border-color: #dee2e6;
+      color: #495057;
+    }
+
+    button.secondary:hover:not(:disabled),
+    button[type="button"]:hover:not(:disabled) {
+      background-color: #e9ecef;
+      border-color: #adb5bd;
+    }
+
+    button.secondary:disabled,
+    button[type="button"]:disabled {
+      background-color: #f8f9fa;
+      border-color: #dee2e6;
+      color: #6c757d;
+      opacity: 0.6;
+    }
+
+    /* 追加ボタン（プラス系） */
+    button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: white;
+    }
+
+    button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type:hover:not(:disabled) {
+      background-color: #1e7e34;
+      border-color: #1e7e34;
+    }
+
   </style>
 </head>
 
