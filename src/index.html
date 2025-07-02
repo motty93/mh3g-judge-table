@@ -5,6 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>砂原採取 判定マクロ</title>
+  <meta name="description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
+  <meta property="og:title" content="砂原採取 判定マクロ">
+  <meta property="og:description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
+  <meta property="og:image" content="./assets/main.png">
+  <meta property="og:url" content="">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MH3G 砂原採取判定ツール">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="砂原採取 判定マクロ">
+  <meta name="twitter:description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
+  <meta name="twitter:image" content="./assets/main.png">
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.9.2/dist/htmx.min.js"></script>
@@ -28,10 +39,27 @@
       justify-content: center;
       position: relative;
       height: 350px;
-      background-image: url('./assets/cover.png');
+      background-color: #f0f0f0;
       background-repeat: no-repeat;
       background-position: center center;
       background-size: cover;
+      transition: opacity 0.5s ease;
+    }
+
+    header.loaded {
+      background-image: url('./assets/cover.png');
+      animation: slideInFromTop 0.8s ease-out;
+    }
+
+    @keyframes slideInFromTop {
+      0% {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     header::after {
@@ -134,7 +162,7 @@
 </head>
 
 <body x-data="judgeApp">
-  <header>
+  <header id="header">
     <h1>砂原採取マクロ 判定法</h1>
   </header>
   <main class="container">
@@ -248,6 +276,15 @@
         init() {
           this.loadSeedData();
           this.loadFromStorage();
+          this.loadHeaderImage();
+        },
+        loadHeaderImage() {
+          const header = document.getElementById('header');
+          const img = new Image();
+          img.onload = () => {
+            header.classList.add('loaded');
+          };
+          img.src = './assets/cover.png';
         },
         loadFromStorage() {
           try {
