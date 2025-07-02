@@ -232,6 +232,44 @@
       border-color: #1e7e34;
     }
 
+    /* テーブルのモバイル対応スタイル */
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -1rem;
+      padding: 0 1rem;
+    }
+
+    .table-container table {
+      min-width: 800px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .table-container {
+        margin: 0 -1.5rem;
+        padding: 0 0.5rem;
+      }
+      
+      .table-container::-webkit-scrollbar {
+        height: 8px;
+      }
+      
+      .table-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      
+      .table-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+      
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+    }
+
   </style>
 </head>
 
@@ -248,50 +286,52 @@
         <button type="button" @click="removePattern" :disabled="patterns.length <= 1">回数を削除</button>
         <span style="margin-left: 1rem;">現在の回数: <span x-text="patterns.length"></span>回</span>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>回数</th>
-            <th>スキル</th>
-            <th>1枠目 (固定)</th>
-            <template x-for="i in 7">
-              <th><span x-text="i + 1 + '枠'"></span></th>
-            </template>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="(trial, t) in patterns" :key="t">
+      <div class="table-container">
+        <table>
+          <thead>
             <tr>
-              <td x-text="t + 1 + '回目'"></td>
-              <td>
-                <select x-model="trial.skill" @change="saveToStorage()">
-                  <option>なし</option>
-                  <option>幸運</option>
-                  <option>激運</option>
-                </select>
-              </td>
-              <td>
-                <select x-model="trial.slots[0]" disabled>
-                  <option value=""></option>
-                  <option>釣りミミズ</option>
-                  <option>生肉</option>
-                  <option>砥石</option>
-                </select>
-              </td>
-              <template x-for="i in 7" :key="i">
+              <th>回数</th>
+              <th>スキル</th>
+              <th>1枠目 (固定)</th>
+              <template x-for="i in 7">
+                <th><span x-text="i + 1 + '枠'"></span></th>
+              </template>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="(trial, t) in patterns" :key="t">
+              <tr>
+                <td x-text="t + 1 + '回目'"></td>
                 <td>
-                  <select x-model="trial.slots[i]" @change="saveToStorage()">
+                  <select x-model="trial.skill" @change="saveToStorage()">
+                    <option>なし</option>
+                    <option>幸運</option>
+                    <option>激運</option>
+                  </select>
+                </td>
+                <td>
+                  <select x-model="trial.slots[0]" disabled>
                     <option value=""></option>
                     <option>釣りミミズ</option>
                     <option>生肉</option>
                     <option>砥石</option>
                   </select>
                 </td>
-              </template>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+                <template x-for="i in 7" :key="i">
+                  <td>
+                    <select x-model="trial.slots[i]" @change="saveToStorage()">
+                      <option value=""></option>
+                      <option>釣りミミズ</option>
+                      <option>生肉</option>
+                      <option>砥石</option>
+                    </select>
+                  </td>
+                </template>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
 
       <div class="form-button-container">
         <button type="submit" class="submit-button" :disabled="judging" :aria-busy="judging">
