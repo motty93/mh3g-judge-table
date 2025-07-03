@@ -3,16 +3,21 @@
 
 <head>
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-P3212E9903"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
-
     function gtag() {
       dataLayer.push(arguments);
     }
-    gtag('js', new Date());
-    gtag('config', 'G-P3212E9903');
-
+    window.addEventListener('load', function() {
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-P3212E9903';
+      script.onload = function() {
+        gtag('js', new Date());
+        gtag('config', 'G-P3212E9903');
+      };
+      document.head.appendChild(script);
+    });
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,262 +25,25 @@
   <meta name="description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
   <meta property="og:title" content="砂原採取 判定マクロ">
   <meta property="og:description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
-  <meta property="og:image" content="./assets/main.png">
+  <meta property="og:image" content="https://mh3g-table-checker.motty93.com/assets/main.webp">
   <meta property="og:url" content="https://mh3g-table-checker.motty93.com/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="MH3G 砂原採取判定ツール">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="砂原採取 判定マクロ">
   <meta name="twitter:description" content="モンスターハンター3G（MH3G）の砂原採取クエストの報酬パターンから、現在の乱数テーブル（T1〜T17）を判定するウェブアプリケーション">
-  <meta name="twitter:image" content="./assets/main.png">
+  <meta name="twitter:image" content="https://mh3g-table-checker.motty93.com/assets/main.webp">
   <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
-  <link rel="preload" as="image" href="./assets/cover.png" fetchpriority="high">
+  <link rel="preload" as="image" href="./assets/main.webp" fetchpriority="high">
+  <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
   <link rel="stylesheet" href="./assets/css/pico.min.css">
-  <script src="./assets/js/htmx.min.js" defer></script>
   <script src="./assets/js/alpine.min.js" defer></script>
   <style>
-    html {
-      font-size: 87.5%;
-      height: 100%;
-    }
-
-    body {
-      min-height: 100vh;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      height: 350px;
-      background-color: #f0f0f0;
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-size: cover;
-      transition: opacity 0.5s ease;
-    }
-
-    header.loaded {
-      background-image: url('./assets/cover.png');
-      animation: slideInFromTop 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    @keyframes slideInFromTop {
-      0% {
-        opacity: 0;
-        transform: translateY(-50px) scale(0.98);
-      }
-
-      50% {
-        opacity: 0.7;
-        transform: translateY(-10px) scale(0.99);
-      }
-
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
-    }
-
-    header::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(255, 255, 255, 0.3);
-    }
-
-    header h1 {
-      margin: 0;
-      padding: 2rem;
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      line-height: 136px;
-      color: #333;
-      text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8);
-    }
-
-    main {
-      flex: 1;
-      background-color: #fff;
-    }
-
-    footer {
-      padding: 2rem 0;
-      border-top: 1px solid #e0e0e0;
-      background-color: #f4f4f4;
-      height: 200px;
-    }
-
-    footer .container {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .footer-nav {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 2rem;
-      margin: 1rem 0;
-    }
-
-    .footer-nav a {
-      color: #666;
-      text-decoration: none;
-      font-size: 0.875rem;
-      transition: color 0.3s ease;
-    }
-
-    .footer-nav a:hover {
-      color: #333;
-    }
-
-    .social-links {
-      display: flex;
-      justify-content: center;
-      gap: 1.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .social-links a {
-      color: #666;
-      font-size: 1.5rem;
-      transition: color 0.3s ease;
-    }
-
-    .social-links a:hover {
-      color: #333;
-    }
-
-    .copyright {
-      text-align: center;
-      color: #666;
-      font-size: 0.875rem;
-      margin: 0;
-    }
-
-    .form-button-container {
-      display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
-    }
-
-    .submit-button {
-      width: auto !important;
-    }
-
-    .reset-button {
-      width: auto !important;
-    }
-
-    /* ボタンのカスタムスタイル */
-    button {
-      font-size: 0.9rem;
-      padding: 0.5rem 1.2rem;
-      border-radius: 6px;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    /* プライマリボタン（判定実行） */
-    button[type="submit"] {
-      background-color: #2d5a27;
-      border-color: #2d5a27;
-      color: white;
-    }
-
-    button[type="submit"]:hover:not(:disabled) {
-      background-color: #1e3d1a;
-      border-color: #1e3d1a;
-    }
-
-    button[type="submit"]:disabled {
-      background-color: #6c757d;
-      border-color: #6c757d;
-      opacity: 0.6;
-    }
-
-    /* セカンダリボタン（リセット、削除） */
-    button.secondary,
-    button[type="button"] {
-      background-color: #f8f9fa;
-      border-color: #dee2e6;
-      color: #495057;
-    }
-
-    button.secondary:hover:not(:disabled),
-    button[type="button"]:hover:not(:disabled) {
-      background-color: #e9ecef;
-      border-color: #adb5bd;
-    }
-
-    button.secondary:disabled,
-    button[type="button"]:disabled {
-      background-color: #f8f9fa;
-      border-color: #dee2e6;
-      color: #6c757d;
-      opacity: 0.6;
-    }
-
-    /* 追加ボタン（プラス系） */
-    button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type {
-      background-color: #28a745;
-      border-color: #28a745;
-      color: white;
-    }
-
-    button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type:hover:not(:disabled) {
-      background-color: #1e7e34;
-      border-color: #1e7e34;
-    }
-
-    /* テーブルのモバイル対応スタイル */
-    .table-container {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin: 0 -1rem;
-      padding: 0 1rem;
-    }
-
-    .table-container table {
-      min-width: 800px;
-      width: 100%;
-    }
-
-    @media (max-width: 768px) {
-      .table-container {
-        margin: 0 -1.5rem;
-        padding: 0 0.5rem;
-      }
-
-      .table-container::-webkit-scrollbar {
-        height: 8px;
-      }
-
-      .table-container::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-      }
-
-      .table-container::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-      }
-
-      .table-container::-webkit-scrollbar-thumb:hover {
-        background: #555;
-      }
-    }
-
+    html{font-size:87.5%;height:100%}body{min-height:100vh;margin:0;display:flex;flex-direction:column}header{display:flex;align-items:center;justify-content:center;position:relative;height:350px;background-color:#f0f0f0;background-repeat:no-repeat;background-position:center center;background-size:cover;transition:opacity .5s ease}header.loaded{background-image:url('./assets/main.webp');animation:slideInFromTop 1.2s cubic-bezier(0.25,0.46,0.45,0.94)}@media (max-width:768px){header{height:250px}}@keyframes slideInFromTop{0%{opacity:0;transform:translateY(-50px) scale(0.98)}50%{opacity:.7;transform:translateY(-10px) scale(0.99)}100%{opacity:1;transform:translateY(0) scale(1)}}header::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background-color:rgba(255,255,255,.3)}header h1{margin:0;padding:2rem;position:relative;z-index:1;text-align:center;line-height:136px;color:#333;text-shadow:2px 2px 4px rgba(255,255,255,.8)}main{flex:1;background-color:#fff}.form-button-container{display:flex;justify-content:flex-end;gap:1rem}.submit-button{width:auto!important}.reset-button{width:auto!important}button{font-size:.9rem;padding:.5rem 1.2rem;border-radius:6px;font-weight:500;transition:all .2s ease}button[type="submit"]{background-color:#2d5a27;border-color:#2d5a27;color:#fff}button[type="submit"]:hover:not(:disabled){background-color:#1e3d1a;border-color:#1e3d1a}button[type="submit"]:disabled{background-color:#6c757d;border-color:#6c757d;opacity:.6}button.secondary,button[type="button"]{background-color:#f8f9fa;border-color:#dee2e6;color:#495057}button.secondary:hover:not(:disabled),button[type="button"]:hover:not(:disabled){background-color:#e9ecef;border-color:#adb5bd}button.secondary:disabled,button[type="button"]:disabled{background-color:#f8f9fa;border-color:#dee2e6;color:#6c757d;opacity:.6}.table-container{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -1rem;padding:0 1rem}.table-container table{min-width:800px;width:100%}@media (max-width:768px){.table-container{margin:0 -1.5rem;padding:0 .5rem}.table-container::-webkit-scrollbar{height:8px}.table-container::-webkit-scrollbar-track{background:#f1f1f1;border-radius:4px}.table-container::-webkit-scrollbar-thumb{background:#888;border-radius:4px}.table-container::-webkit-scrollbar-thumb:hover{background:#555}}
+  </style>
+  <style>
+    footer{padding:2rem 0;border-top:1px solid #e0e0e0;background-color:#f4f4f4;height:200px}footer .container{display:flex;flex-direction:column;gap:1.5rem}.footer-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:2rem;margin:1rem 0}.footer-nav a{color:#666;text-decoration:none;font-size:.875rem;transition:color .3s ease}.footer-nav a:hover{color:#333}.social-links{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1rem}.social-links a{color:#666;font-size:1.5rem;transition:color .3s ease}.social-links a:hover{color:#333}.copyright{text-align:center;color:#666;font-size:.875rem;margin:0}button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type{background-color:#28a745;border-color:#28a745;color:#fff}button:not(.secondary):not([type="submit"]):not([type="button"]):first-of-type:hover:not(:disabled){background-color:#1e7e34;border-color:#1e7e34}
   </style>
 </head>
 
@@ -400,11 +168,27 @@
         },
         loadHeaderImage() {
           const header = document.getElementById('header');
-          const img = new Image();
-          img.onload = () => {
-            header.classList.add('loaded');
-          };
-          img.src = './assets/cover.png';
+          if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+              entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                  const img = new Image();
+                  img.onload = () => {
+                    header.classList.add('loaded');
+                  };
+                  img.src = './assets/main.webp';
+                  observer.disconnect();
+                }
+              });
+            });
+            observer.observe(header);
+          } else {
+            const img = new Image();
+            img.onload = () => {
+              header.classList.add('loaded');
+            };
+            img.src = './assets/main.webp';
+          }
         },
         loadFromStorage() {
           try {
@@ -429,11 +213,7 @@
         },
         async loadSeedData() {
           try {
-            const response = await fetch('./data/table-seed.csv', {
-              headers: {
-                'Content-Type': 'text/plain'
-              }
-            });
+            const response = await fetch('./data/table-seed.csv');
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
@@ -501,7 +281,7 @@
           this.foundTable = '';
           this.seedValue = '';
           // 少し遅延を入れてローディング表示を確実に見せる
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => requestAnimationFrame(resolve));
           const skillToLack = {
             'なし': 22,
             '幸運': 26,
@@ -590,33 +370,7 @@
     })
 
   </script>
-  <footer>
-    <div class="container">
-      <nav class="footer-nav">
-        <a
-          href="https://memo.motty93.com/game/202507011040-mh3g%E3%81%AE%E3%81%8A%E5%AE%88%E3%82%8A%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB%E3%83%90%E3%82%B0%E3%81%A8t10%E3%81%AE%E3%82%B9%E3%83%8A%E3%82%A4%E3%83%97%E6%96%B9%E6%B3%95%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6/">使い方</a>
-        <a href="./contact.html">お問い合わせ</a>
-        <a href="./terms.html">利用規約</a>
-        <a href="./privacy.html">プライバシーポリシー</a>
-      </nav>
-      <div class="social-links">
-        <a href="https://x.com/nil_motty93" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
-          </svg>
-        </a>
-        <a href="https://github.com/motty93/mh3g-judge-table" target="_blank" rel="noopener noreferrer"
-          aria-label="GitHub">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-          </svg>
-        </a>
-      </div>
-      <p class="copyright">&copy; 2025 MH3G 砂原採取判定ツール</p>
-    </div>
-  </footer>
+  <footer><div class="container"><nav class="footer-nav"><a href="https://memo.motty93.com/game/202507011040-mh3g%E3%81%AE%E3%81%8A%E5%AE%88%E3%82%8A%E3%83%86%E3%83%BC%E3%83%96%E3%83%AB%E3%83%90%E3%82%B0%E3%81%A8t10%E3%81%AE%E3%82%B9%E3%83%8A%E3%82%A4%E3%83%97%E6%96%B9%E6%B3%95%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6/">使い方</a><a href="./contact.html">お問い合わせ</a><a href="./terms.html">利用規約</a><a href="./privacy.html">プライバシーポリシー</a></nav><div class="social-links"><a href="https://x.com/nil_motty93" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a><a href="https://github.com/motty93/mh3g-judge-table" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></a></div><p class="copyright">&copy; 2025 MH3G 砂原採取判定ツール</p></div></footer>
 </body>
 
 </html>
