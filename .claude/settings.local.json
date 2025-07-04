@@ -8,7 +8,9 @@
       "Bash(tree:*)",
       "Bash(ls:*)",
       "Bash(webpinfo:*)",
-      "Bash(cwebp:*)"
+      "Bash(cwebp:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
