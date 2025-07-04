@@ -7,7 +7,15 @@
     function gtag() {
       dataLayer.push(arguments);
     }
-    window.addEventListener('load', function() {
+    
+    // GA4の読み込みフラグ
+    var ga4Loaded = false;
+    
+    // GA4を読み込む関数
+    function loadGA4() {
+      if (ga4Loaded) return;
+      ga4Loaded = true;
+      
       var script = document.createElement('script');
       script.async = true;
       script.src = 'https://www.googletagmanager.com/gtag/js?id=G-P3212E9903';
@@ -16,6 +24,37 @@
         gtag('config', 'G-P3212E9903');
       };
       document.head.appendChild(script);
+    }
+    
+    // ユーザーインタラクション後に読み込み
+    var userInteracted = false;
+    function handleUserInteraction() {
+      if (!userInteracted) {
+        userInteracted = true;
+        // 少し遅延してから読み込み（ユーザー操作を妨げないため）
+        setTimeout(loadGA4, 100);
+        
+        // イベントリスナーを削除
+        document.removeEventListener('click', handleUserInteraction);
+        document.removeEventListener('scroll', handleUserInteraction);
+        document.removeEventListener('touchstart', handleUserInteraction);
+        document.removeEventListener('mousemove', handleUserInteraction);
+      }
+    }
+    
+    // イベントリスナーを追加
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('scroll', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    document.addEventListener('mousemove', handleUserInteraction);
+    
+    // 念のため、ページ読み込み後10秒経過したら自動で読み込み
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (!ga4Loaded) {
+          loadGA4();
+        }
+      }, 10000);
     });
   </script>
   <meta charset="UTF-8">
