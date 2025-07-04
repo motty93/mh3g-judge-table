@@ -6,7 +6,9 @@
       "Bash(grep:*)",
       "Bash(mv:*)",
       "Bash(tree:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(webpinfo:*)",
+      "Bash(cwebp:*)"
     ],
     "deny": []
   }
