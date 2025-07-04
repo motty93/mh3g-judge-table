@@ -2,7 +2,6 @@
 <html lang="ja" data-theme="light">
 
 <head>
-  <!-- Google tag (gtag.js) -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() {
@@ -166,36 +165,36 @@
         loading: true,
         judging: false,
         init() {
-          this.loadSeedData();
+          Promise.all([
+            this.loadSeedData(),
+            this.loadHeaderImage()
+          ]);
           this.loadFromStorage();
-          this.loadHeaderImage();
           this.initTableScroll();
         },
         initTableScroll() {
-          // モバイルでのみスクロールバー表示制御を行う
-          if (window.innerWidth <= 768) {
-            const tableContainers = document.querySelectorAll('.table-container');
-            tableContainers.forEach(container => {
-              let scrollTimer;
-              
-              // タッチ開始時にスクロールバーを表示
-              container.addEventListener('touchstart', () => {
-                container.classList.add('show-scrollbar');
-                clearTimeout(scrollTimer);
-              });
-              
-              // スクロール中もスクロールバーを表示
-              container.addEventListener('scroll', () => {
-                container.classList.add('show-scrollbar');
-                clearTimeout(scrollTimer);
+          requestAnimationFrame(() => {
+            if (window.innerWidth <= 768) {
+              const tableContainers = document.querySelectorAll('.table-container');
+              tableContainers.forEach(container => {
+                let scrollTimer;
                 
-                // スクロール終了後3秒でスクロールバーを非表示
-                scrollTimer = setTimeout(() => {
-                  container.classList.remove('show-scrollbar');
-                }, 3000);
+                container.addEventListener('touchstart', () => {
+                  container.classList.add('show-scrollbar');
+                  clearTimeout(scrollTimer);
+                }, { passive: true });
+                
+                container.addEventListener('scroll', () => {
+                  container.classList.add('show-scrollbar');
+                  clearTimeout(scrollTimer);
+                  
+                  scrollTimer = setTimeout(() => {
+                    container.classList.remove('show-scrollbar');
+                  }, 3000);
+                }, { passive: true });
               });
-            });
-          }
+            }
+          });
         },
         loadHeaderImage() {
           const header = document.getElementById('header');
@@ -229,7 +228,6 @@
               this.patterns = data.patterns || this.patterns;
             }
           } catch (error) {
-            // localStorageの読み込みエラーは無視
           }
         },
         saveToStorage() {
@@ -239,7 +237,6 @@
             };
             localStorage.setItem('mh3g-judge-patterns', JSON.stringify(data));
           } catch (error) {
-            // localStorageの保存エラーは無視
           }
         },
         async loadSeedData() {
@@ -311,14 +308,13 @@
           this.result = '';
           this.foundTable = '';
           this.seedValue = '';
-          // 少し遅延を入れてローディング表示を確実に見せる
-          await new Promise(resolve => requestAnimationFrame(resolve));
+          await new Promise(resolve => setTimeout(resolve, 0));
           const skillToLack = {
             'なし': 22,
             '幸運': 26,
             '激運': 29
           };
-          const FIXED_CONSUME = 32; // 固定消費値
+          const FIXED_CONSUME = 32;
           const TABLE_COUNT = 17;
           const candidateTables = [];
           const isAllEmpty = this.patterns.every(p => p.slots.slice(1).every(s => s === ''));
@@ -340,7 +336,6 @@
                 for (let n = 0; n < 7; n++) {
                   const rewardName = trial.slots[n + 1];
                   mawari += 1;
-                  // 4枠目以降でスカ判定（VBAの120行目に対応：n > 2）
                   const skaRowVBA = ((gyou + kai + n * 2 - 1) % maxl + maxl) % maxl + 1;
                   const skaIndex = skaRowVBA - 1;
                   if (n > 2 && this.seedData[skaIndex][t] % 32 >= lack) {
@@ -394,7 +389,6 @@
             this.foundTable = '';
             this.seedValue = '';
           }
-          // 判定処理完了
           this.judging = false;
         }
       }))
