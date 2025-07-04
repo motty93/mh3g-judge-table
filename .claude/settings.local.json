@@ -10,7 +10,8 @@
       "Bash(webpinfo:*)",
       "Bash(cwebp:*)",
       "Bash(rm:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }
